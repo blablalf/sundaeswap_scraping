@@ -1,3 +1,6 @@
+#!/bin/bash
+
+#MacOS install
 if [[ $OSTYPE == 'darwin'* ]]; then
     echo 'macOS_detected'
     which -s brew
@@ -9,6 +12,7 @@ if [[ $OSTYPE == 'darwin'* ]]; then
     fi
     echo 'Installing node & npm with brew'
     brew install node
+#Linux install
 elif [[ $OSTYPE == 'linux'* ]]; then
     echo 'linux_detected'
     echo 'Installing node & npm with apt'
