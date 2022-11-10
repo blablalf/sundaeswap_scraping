@@ -1,0 +1,23 @@
+{
+  "name": "sundaeswap_scraping",
+  "version": "1.0.0",
+  "description": "",
+  "main": "source_sundae.js",
+  "scripts": {
+    "start": "node source_sundae.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blablalf/sundaeswap_scraping.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/blablalf/sundaeswap_scraping/issues"
+  },
+  "homepage": "https://github.com/blablalf/sundaeswap_scraping#readme",
+  "devDependencies": {
+    "puppeteer": "^19.2.2"
+  }
+}
