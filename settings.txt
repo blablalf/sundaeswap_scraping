@@ -1,1 +1,3 @@
-ask_for_install =   true
+ask_for_install =         false
+asset_to_follow= CLAP
+Don't delete this line :)
