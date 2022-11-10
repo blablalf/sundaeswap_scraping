@@ -6,7 +6,7 @@ const puppeteer = require('puppeteer');
   await page.goto('https://exchange.sundaeswap.finance', {waitUntil: 'networkidle0'}); // Wait until page is fully loaded
   for (let i = 0; i < 4; i++) {
     await page.evaluate(scrollToBottom); // Scroll down to load more assets
-    await page.waitForNetworkIdle(1000); // Wait 1s
+    await page.waitForNetworkIdle(1); // Wait 1ms
   }
   console.log(await page.content()); // out the content
   await browser.close();

@@ -10,7 +10,18 @@ if [[ $(cat settings.txt | sed -n -e "s/ask_for_install *= *//p") == 'true' ]]; 
 fi
 
 #Get the asset to follow inside the settings file
-asset_to_follow=$(cat settings.txt | sed -n -e 's/asset_to_follow *= *//p')
+asset_to_follow=$(cat settings.txt | sed -ne 's/asset_to_follow *= *//p')
 
 #Scraping and parsing
-node ./ressources/source_sundae.js | egrep -o "$asset_to_follow/ADA.{255}.{255}"
+code_to_parse=$(node ./ressources/source_sundae.js)
+asset_code=$(echo $code_to_parse | egrep -o "$asset_to_follow/ADA.{255}.{255}" | grep -o "<div class=\"sc-bdvvtL sc-1aj876m-6 dfkUWV biWbyS\">.*</div>")
+asset_decimal=$(echo $asset_code | grep -o "<span class=\"sc-lbhJGD hfhuXO\">.*</span> ₳" | sed -n 's:.*huXO">\(.*\)</spa.*:\1:p')
+asset_main_val=$(echo $asset_code | grep -o "<span><span>.*</span><span" | sed -n 's:.*<span>\(.*\)</spa.*:\1:p')
+asset_val=$asset_main_val$asset_decimal
+
+#Displaying asset val
+echo $asset_to_follow"_price="$asset_val
+
+#EXAMPLE OF CALCULATION ON IT
+#add_one=$(echo "$asset_val + 1" | bc)
+#echo $add
