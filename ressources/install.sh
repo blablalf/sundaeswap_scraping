@@ -27,6 +27,6 @@ cd ./ressources && npm i
 
 #Getting Node path
 echo 'Getting node path'
-node_path=$(which node)
+node_path=$(which node) #getting node path
 sed -ie '/node_path *=.*/d' ../.env #deleting eventual old line
 sed -ie "1s|^|node_path=$node_path\n|" ../.env #adding the new one

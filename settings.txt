@@ -1,3 +1,4 @@
 ask_for_install =         false
 asset_to_follow= CLAP
+get_24h_datas=true
 Don't delete this line :)

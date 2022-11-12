@@ -8,6 +8,7 @@ const puppeteer = require('puppeteer');
     await page.evaluate(scrollToBottom); // Scroll down to load more assets
     await page.waitForNetworkIdle(1); // Wait 1ms
   }
+  await page.waitForNetworkIdle(1000); // Wait 1s (useful only to get the 24H volume)
   console.log(await page.content()); // out the content
   await browser.close();
 })();
