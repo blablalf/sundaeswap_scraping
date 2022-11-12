@@ -53,17 +53,27 @@ if [[ $(cat settings.txt | sed -n -e "s/get_24h_datas *= *//p") == 'true' ]]; th
     total_locked_ada=$total_locked_ada_main$total_locked_ada_decimal
 
     #Getting the 24h volume
-    volume_code=$(echo $full_asset_code | grep -o "Volume 24H.*₳")
-
-    #on doit boucler nb de fois qu'il y a un match avec "part__integer" et executer :
-    volume_main=$(echo $volume_code | sed 's:.*part__integer">\([0-9]*\)</span><span cl.*:\1:g') #ensuite on reprends entre volume_code et la sortie de cette ligne et on la reexecute
-    #si la sortie c 095 alors on reprend avec volume_code=$(echo $full_asset_code | grep -o "Volume 24H.*095")
-
-
-    #total_locked_ada_decimal=$(echo $total_locked_ada_code | sed -n 's:.*uXO">\(.*\)</s.*:\1:p')
-    #total_locked_ada=$total_locked_ada_main$total_locked_ada_decimal
+    #Sometimes, there are no volume, the first if permits to detect that
+    #Then, in order to be able to get the volume we need to decompose the multiples component values
+    #For example, for the value 1 096 634,54 -> there are these components |1|, |096|, |634| and |54|
+    #Of course there the integers parts, and the decimal one
+    #So we count the integers parts and then we parse them
+    volume=""
+    if [[ $(echo $full_asset_code | grep -o "Volume 24H.*More") ]]; then
+        echo "no volume"
+    else
+        volume_main=""
+        volume_code=$(echo $full_asset_code | grep -o "Volume 24H.*₳")
+        for i in {1..$(echo $full_asset_code | grep -o "part__integer" | wc -l)}
+        do
+            volume_main=$(echo $volume_code | sed 's:.*part__integer">\([0-9]*\)</span><span cl.*:\1:g')$volume_main
+            volume_code=$(echo $volume_code | grep -o "Volume 24H.*$volume_main")
+        done
+        volume_decimal=$(echo $full_asset_code | sed 's:.*_fraction">\([0-9]*\)</span><span.*:\1:g')
+        volume=$volume_main'.'$volume_decimal'₳'
+        echo "volume="$volume
+    fi
     
-    echo $volume_main
 fi
 
 #EXAMPLE OF CALCULATION ON IT
