@@ -5,17 +5,36 @@ cd $(dirname $0) #just to be sure that we would be in the correct dir
 #Installation of needed programs
 if [[ $(cat settings.txt | sed -n -e "s/ask_for_install *= *//p") == 'true' ]]; then
     echo "Run program installer (y)/n: "
-    read install_requested
-    if [ $install_requested != 'n' ]; then
+    read response
+    if [[ $response != 'n' ]]; then
         bash ./ressources/install.sh
     fi
-fi
 
-#Cronjob setting
-#"* * * * * $(dirname $0)/scrape.sh"
-#* * * * * screen -dmS scrape bash "$(dirname $0)/scrape.sh"
-#echo "* * * * * screen -dmS scrape bash \"$(dirname $0)/scrape.sh\"" > ressources/cron_scrape
-#* * * * * /Users/blabla/sundaeswap_scraping/scrape.sh
+    #Cronjob setting
+    echo "Run the cronjob install (y)/n: "
+    read response
+    if [[ $response != 'n' ]]; then
+        echo "Enter scrape.sh directory path to be able to automatically launch the script (without \" or ' characters): "
+        read response
+        if [[ $(cat settings.txt | sed -n -e "s/price_min_interval *= *//p") != 1 ]]; then
+            price_min_interval=$(cat settings.txt | sed -ne 's/price_min_interval *= *//p')
+            echo "*/$price_min_interval * * * * $response/scrape.sh" > ./ressources/.cronjobs
+        else
+            echo "* * * * * $response/scrape.sh" > ./ressources/.cronjobs
+        fi
+        echo "@daily bash $response/scrape.sh --daily" >> ./ressources/.cronjobs
+        echo ""
+        echo "Do you want to add the following cronjobs to crontab :"
+        cat ./ressources/.cronjobs
+        echo ""
+        echo "(y)/n: "
+        read response
+        if [[ $response != 'n' ]]; then
+            crontab ./ressources/.cronjobs
+        fi
+        echo ""
+    fi
+fi
 
 #Get the asset to follow inside the settings file
 asset_to_follow=$(cat settings.txt | sed -ne 's/asset_to_follow *= *//p')
@@ -120,12 +139,13 @@ fi
 
 if [[ $(cat settings.txt | sed -n -e "s/send_telegram *= *//p") == 'true' ]]; then
 
+    #Base URL
     message_url="https://api.telegram.org/bot"$bot_token"/sendMessage?chat_id="$chat_id"&text="
 
     #If we have got the price, let's send it
     if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
         #Send the message
-        message_url=$message_url$asset_to_follow"_price="$full_asset_val
+        message_url=$message_url$asset_to_follow"+price+=+"$full_asset_val
     fi
 
     #If we want the 24 hour datas, let's send them
@@ -133,18 +153,18 @@ if [[ $(cat settings.txt | sed -n -e "s/send_telegram *= *//p") == 'true' ]]; th
         #If we have got the price, let's send the evolution of it
         if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
             #Send the the price variation
-            message_url=$message_url"%0Alast_price_variation=$sign$price_var"
+            message_url=$message_url"%0Alast+price+variation+=$sign$price_var"
         fi
+
+        #Add total locked asset into the message
+        message_url=$message_url"%0Atotal+locked+$asset_to_follow+=+"$total_locked_asset_main$total_locked_asset_decimal"+"$asset_to_follow
+
+        #Add total locked ADA into the message
+        message_url=$message_url"%0Atotal+locked+ADA+=+"$total_locked_ada"+₳"
+
+        #Add 24h total volume into the message
+        message_url=$message_url"%0A24h+Volume+=+"$volume_main'.'$volume_decimal"+₳"
     fi
-
-    #Add total locked asset into the message
-    message_url=$message_url"%0Atotal_locked_$asset_to_follow=+"$total_locked_asset_main$total_locked_asset_decimal"+"$asset_to_follow
-
-    #Add total locked ADA into the message
-    message_url=$message_url"%0Atotal_locked_ADA="$total_locked_ada"+₳"
-
-    #Add 24h total volume into the message
-    message_url=$message_url"%0A24h_Volume="$volume_main'.'$volume_decimal"+₳"
 
     #Finally, thend the message
     curl -s $message_url > /dev/null

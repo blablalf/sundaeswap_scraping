@@ -1,7 +1,7 @@
-ask_for_install =         false
+ask_for_install =         true
 asset_to_follow= CLAP
 get_price=true
-price_min_interval=1
+price_min_interval=2
 echo_data  =true
 send_telegram =true
 Don't delete this line :)

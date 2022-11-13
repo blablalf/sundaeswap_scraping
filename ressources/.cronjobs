@@ -1,0 +1,2 @@
+*/2 * * * * /Users/blabla/sundaeswap_scraping/scrape.sh/scrape.sh
+@daily bash /Users/blabla/sundaeswap_scraping/scrape.sh/scrape.sh --daily
