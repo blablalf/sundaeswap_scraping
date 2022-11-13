@@ -26,8 +26,8 @@ code_to_parse=$($node_path ./ressources/source_sundae.js)
 #Get price data if asked
 if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
     lite_asset_code=$(echo $code_to_parse | egrep -o "$asset_to_follow/ADA.{255}.{255}" | grep -o "<div class=\"sc-bdvvtL sc-1aj876m-6 dfkUWV biWbyS\">.*</div>")
-    asset_decimal=$(echo $asset_code | grep -o "<span class=\"sc-lbhJGD hfhuXO\">.*</span> ₳" | sed -n 's:.*huXO">\(.*\)</spa.*:\1:p')
-    asset_main_val=$(echo $asset_code | grep -o "<span><span>.*</span><span" | sed -n 's:.*<span>\(.*\)</spa.*:\1:p')
+    asset_decimal=$(echo $lite_asset_code | grep -o "<span class=\"sc-lbhJGD hfhuXO\">.*</span> ₳" | sed -n 's:.*huXO">\(.*\)</spa.*:\1:p')
+    asset_main_val=$(echo $lite_asset_code | grep -o "<span><span>.*</span><span" | sed -n 's:.*<span>\(.*\)</spa.*:\1:p')
     asset_val=$asset_main_val$asset_decimal'₳'
 
     #Echo the value if asked into the settings
