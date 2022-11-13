@@ -40,7 +40,6 @@ if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
     #Displaying asset val with telegram bot
     bot_token=$(cat .env | sed -ne 's/bot_token *= *//p')
     chat_id=$(cat .env | sed -ne 's/chat_id *= *//p')
-    message_url="https://api.telegram.org/bot"$bot_token"/sendMessage?chat_id="$chat_id"&text="$asset_to_follow"_price="$full_asset_val
 
     if [[ $1 == '--daily' ]]; then
         #Calcul the price variation
@@ -48,14 +47,14 @@ if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
 
         touch .last_asset_prices #We creates the file if it doesn't exist
         old_promised_value=$(cat .last_asset_prices | sed -n -e "s/$asset_to_follow *= *//p")
-        sign=''
         if [[ $old_promised_value =~ [0-9]*\.[0-9]* ]]; then #So if there is an old value for our asset then...
             if [[ $(echo "$asset_val >= $old_promised_value" | bc) == 1 ]]; then
-                sign='+'
+                sign='﹢'
             else
                 sign='' #negative sign is added anyway by bc
             fi
-            price_var=$sign$(echo "scale=4; (($asset_val/$old_promised_value)-1)*100" | bc | sed 's/..$//')'%'
+            price_var=$(echo "scale=4; (($asset_val/$old_promised_value)-1)*100" | bc | sed 's/..$//')'%'
+            full_price_var=$sign$price_var
         fi
         
         #Updating the price into the appropried file
@@ -64,7 +63,7 @@ if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
 
         #Echo the value if asked into the settings
         if [[ $(cat settings.txt | sed -n -e "s/echo_data *= *//p") == 'true' ]]; then
-            echo "last_price_variation=$price_var"
+            echo "last_price_variation=$full_price_var"
         fi
     fi
 
@@ -89,10 +88,10 @@ if [[ $1 == '--daily' ]]; then
     total_locked_ada_code=$(echo $full_asset_code | grep -o "Total Locked ADA.*Volu")
     total_locked_ada_main=$(echo $total_locked_ada_code | sed -n 's:.*WbyS"><span>\(.*\)</span><s.*:\1:p' | sed 's:,::g')
     total_locked_ada_decimal=$(echo $total_locked_ada_code | sed -n 's:.*uXO">\(.*\)</s.*:\1:p')
-    total_locked_ada=$total_locked_ada_main$total_locked_ada_decimal' ₳'
+    total_locked_ada=$total_locked_ada_main$total_locked_ada_decimal
     #Echo the value if asked into the settings
     if [[ $(cat settings.txt | sed -n -e "s/echo_data *= *//p") == 'true' ]]; then
-        echo "total_locked_ADA="$total_locked_ada
+        echo "total_locked_ADA="$total_locked_ada' ₳'
     fi
 
     #Getting the 24h volume
@@ -101,11 +100,9 @@ if [[ $1 == '--daily' ]]; then
     #For example, for the value 1 096 634,54 -> there are these components |1|, |096|, |634| and |54|
     #Of course there the integers parts, and the decimal one
     #So we count the integers parts and then we parse them
-    volume=""
     if [[ $(echo $full_asset_code | grep -o "Volume 24H.*More") ]]; then
         volume="no_volume"
     else
-        volume_main=""
         volume_code=$(echo $full_asset_code | grep -o "Volume 24H.*₳")
         for i in {1..$(($(echo $full_asset_code | grep -o "part__integer" | wc -l)))}
         do
@@ -123,10 +120,12 @@ fi
 
 if [[ $(cat settings.txt | sed -n -e "s/send_telegram *= *//p") == 'true' ]]; then
 
+    message_url="https://api.telegram.org/bot"$bot_token"/sendMessage?chat_id="$chat_id"&text="
+
     #If we have got the price, let's send it
     if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
         #Send the message
-        curl $message_url
+        message_url=$message_url$asset_to_follow"_price="$full_asset_val
     fi
 
     #If we want the 24 hour datas, let's send them
@@ -134,11 +133,19 @@ if [[ $(cat settings.txt | sed -n -e "s/send_telegram *= *//p") == 'true' ]]; th
         #If we have got the price, let's send the evolution of it
         if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
             #Send the the price variation
-            echo \#Send the the price variation
+            message_url=$message_url"%0Alast_price_variation=$sign$price_var"
         fi
     fi
-fi
 
-#EXAMPLE OF CALCULATION ON IT
-#add_one=$(echo "$asset_val + 1" | bc)
-#echo $add
+    #Add total locked asset into the message
+    message_url=$message_url"%0Atotal_locked_$asset_to_follow=+"$total_locked_asset_main$total_locked_asset_decimal"+"$asset_to_follow
+
+    #Add total locked ADA into the message
+    message_url=$message_url"%0Atotal_locked_ADA="$total_locked_ada"+₳"
+
+    #Add 24h total volume into the message
+    message_url=$message_url"%0A24h_Volume="$volume_main'.'$volume_decimal"+₳"
+
+    #Finally, thend the message
+    curl -s $message_url > /dev/null
+fi
