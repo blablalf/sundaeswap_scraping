@@ -57,6 +57,7 @@ if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
         fi
         
         #Updating the price into the appropried file
+        touch .last_asset_prices
         cat .last_asset_prices | sed -e "/$asset_to_follow/d" > .last_asset_prices #deleting eventual old line
         echo "$asset_to_follow=$asset_val" >> .last_asset_prices #adding the new one
 
