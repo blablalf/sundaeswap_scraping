@@ -42,22 +42,23 @@ if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
     chat_id=$(cat .env | sed -ne 's/chat_id *= *//p')
     message_url="https://api.telegram.org/bot"$bot_token"/sendMessage?chat_id="$chat_id"&text="$asset_to_follow"_price="$full_asset_val
 
-    if [[ $(cat settings.txt | sed -n -e "s/get_24h_datas *= *//p") == 'true' ]]; then
+    if [[ $1 == '--daily' ]]; then
         #Calcul the price variation
         price_var="0%" #default value in case there is no "yesterday" value
-        old_promised_value=$(cat last_asset_prices.txt | sed -n -e "s/$asset_to_follow *= *//p")
+
+        touch .last_asset_prices #We creates the file if it doesn't exist
+        old_promised_value=$(cat .last_asset_prices | sed -n -e "s/$asset_to_follow *= *//p")
         sign=''
         if [[ $old_promised_value =~ [0-9]*\.[0-9]* ]]; then #So if there is an old value for our asset then...
             if [[ $(echo "$asset_val >= $old_promised_value" | bc) == 1 ]]; then
                 sign='+'
             else
-                sign='-'
+                sign='' #negative sign is added anyway by bc
             fi
-            price_var=$sign$(echo "scale=4; ($old_promised_value/$asset_val)*100" | bc | sed 's/..$//')'%'
+            price_var=$sign$(echo "scale=4; (($asset_val/$old_promised_value)-1)*100" | bc | sed 's/..$//')'%'
         fi
         
         #Updating the price into the appropried file
-        touch .last_asset_prices
         cat .last_asset_prices | sed -e "/$asset_to_follow/d" > .last_asset_prices #deleting eventual old line
         echo "$asset_to_follow=$asset_val" >> .last_asset_prices #adding the new one
 
@@ -70,7 +71,7 @@ if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
 fi
 
 #24h datas
-if [[ $(cat settings.txt | sed -n -e "s/get_24h_datas *= *//p") == 'true' ]]; then
+if [[ $1 == '--daily' ]]; then
     #We get more code because we gonna retrieve more datas
     full_asset_code=$(echo $code_to_parse | egrep -o "$asset_to_follow/ADA.{255}.{255}.{255}.{255}.{255}.{255}")
 
@@ -129,8 +130,7 @@ if [[ $(cat settings.txt | sed -n -e "s/send_telegram *= *//p") == 'true' ]]; th
     fi
 
     #If we want the 24 hour datas, let's send them
-    if [[ $(cat settings.txt | sed -n -e "s/get_24h_datas *= *//p") == 'true' ]]; then
-
+    if [[ $1 == '--daily' ]]; then
         #If we have got the price, let's send the evolution of it
         if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
             #Send the the price variation

@@ -1,6 +1,5 @@
 ask_for_install =         false
 asset_to_follow= CLAP
-get_24h_datas=true
 get_price=true
 price_min_interval=1
 echo_data  =true
