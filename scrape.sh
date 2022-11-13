@@ -15,6 +15,7 @@ fi
 #"* * * * * $(dirname $0)/scrape.sh"
 #* * * * * screen -dmS scrape bash "$(dirname $0)/scrape.sh"
 #echo "* * * * * screen -dmS scrape bash \"$(dirname $0)/scrape.sh\"" > ressources/cron_scrape
+#* * * * * /Users/blabla/sundaeswap_scraping/scrape.sh
 
 #Get the asset to follow inside the settings file
 asset_to_follow=$(cat settings.txt | sed -ne 's/asset_to_follow *= *//p')
@@ -28,26 +29,40 @@ if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
     lite_asset_code=$(echo $code_to_parse | egrep -o "$asset_to_follow/ADA.{255}.{255}" | grep -o "<div class=\"sc-bdvvtL sc-1aj876m-6 dfkUWV biWbyS\">.*</div>")
     asset_decimal=$(echo $lite_asset_code | grep -o "<span class=\"sc-lbhJGD hfhuXO\">.*</span> ₳" | sed -n 's:.*huXO">\(.*\)</spa.*:\1:p')
     asset_main_val=$(echo $lite_asset_code | grep -o "<span><span>.*</span><span" | sed -n 's:.*<span>\(.*\)</spa.*:\1:p')
-    asset_val=$asset_main_val$asset_decimal'₳'
+    asset_val=$asset_main_val$asset_decimal
+    full_asset_val=$asset_val'₳'
 
     #Echo the value if asked into the settings
     if [[ $(cat settings.txt | sed -n -e "s/echo_data *= *//p") == 'true' ]]; then
-        echo "asset_price="$asset_val
+        echo "asset_price="$full_asset_val
     fi
 
     #Displaying asset val with telegram bot
     bot_token=$(cat .env | sed -ne 's/bot_token *= *//p')
     chat_id=$(cat .env | sed -ne 's/chat_id *= *//p')
-    message_url="https://api.telegram.org/bot"$bot_token"/sendMessage?chat_id="$chat_id"&text="$asset_to_follow"_price="$asset_val
+    message_url="https://api.telegram.org/bot"$bot_token"/sendMessage?chat_id="$chat_id"&text="$asset_to_follow"_price="$full_asset_val
 
     if [[ $(cat settings.txt | sed -n -e "s/get_24h_datas *= *//p") == 'true' ]]; then
         #Calcul the price variation
-        #TODO
+        price_var="0%" #default value in case there is no "yesterday" value
+        old_promised_value=$(cat last_asset_prices.txt | sed -n -e "s/$asset_to_follow *= *//p")
+        sign=''
+        if [[ $old_promised_value =~ [0-9]*\.[0-9]* ]]; then #So if there is an old value for our asset then...
+            if [[ $(echo "$asset_val >= $old_promised_value" | bc) == 1 ]]; then
+                sign='+'
+            else
+                sign='-'
+            fi
+            price_var=$sign$(echo "scale=4; ($old_promised_value/$asset_val)*100" | bc | sed 's/..$//')'%'
+        fi
+        
+        #Updating the price into the appropried file
+        cat .last_asset_prices | sed -e "/$asset_to_follow/d" > .last_asset_prices #deleting eventual old line
+        echo "$asset_to_follow=$asset_val" >> .last_asset_prices #adding the new one
 
         #Echo the value if asked into the settings
         if [[ $(cat settings.txt | sed -n -e "s/echo_data *= *//p") == 'true' ]]; then
-            #TODO
-            echo "price_variation=\$the_price_variation"
+            echo "last_price_variation=$price_var"
         fi
     fi
 
@@ -90,7 +105,7 @@ if [[ $(cat settings.txt | sed -n -e "s/get_24h_datas *= *//p") == 'true' ]]; th
     else
         volume_main=""
         volume_code=$(echo $full_asset_code | grep -o "Volume 24H.*₳")
-        for i in {1..$(echo $full_asset_code | grep -o "part__integer" | wc -l)}
+        for i in {1..$(($(echo $full_asset_code | grep -o "part__integer" | wc -l)))}
         do
             volume_main=$(echo $volume_code | sed 's:.*part__integer">\([0-9]*\)</span><span cl.*:\1:g')$volume_main
             volume_code=$(echo $volume_code | grep -o "Volume 24H.*$volume_main")
@@ -102,7 +117,6 @@ if [[ $(cat settings.txt | sed -n -e "s/get_24h_datas *= *//p") == 'true' ]]; th
     if [[ $(cat settings.txt | sed -n -e "s/echo_data *= *//p") == 'true' ]]; then
         echo "24h_Volume="$volume
     fi
-    
 fi
 
 if [[ $(cat settings.txt | sed -n -e "s/send_telegram *= *//p") == 'true' ]]; then
@@ -119,7 +133,6 @@ if [[ $(cat settings.txt | sed -n -e "s/send_telegram *= *//p") == 'true' ]]; th
         #If we have got the price, let's send the evolution of it
         if [[ $(cat settings.txt | sed -n -e "s/get_price *= *//p") == 'true' ]]; then
             #Send the the price variation
-
             echo \#Send the the price variation
         fi
     fi
