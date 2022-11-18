@@ -10,7 +10,7 @@ if [[ $OSTYPE == 'darwin'* ]]; then
     else
         echo 'brew_detected'
     fi
-    echo 'Installing node & npm & screen with brew'
+    echo 'Installing node & npm with brew'
     brew install node
 
 #Linux install
