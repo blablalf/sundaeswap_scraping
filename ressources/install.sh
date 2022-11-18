@@ -27,6 +27,7 @@ cd ./ressources && npm i
 
 #Getting Node path
 echo 'Getting node path'
+touch .env #creating the .env file if it does not exist
 node_path=$(which node) #getting node path
 cat .env | sed -e "/node_path/d" > ../.env #deleting eventual old line
 echo "node_path=$node_path" >> ../.env #adding the new one
