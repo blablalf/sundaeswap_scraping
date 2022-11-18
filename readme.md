@@ -31,5 +31,5 @@ or
 ```
 bash scrape.sh
 ```
-
+You can also run this script with  `--daily` arg, this will send you additionnal daily data
 
