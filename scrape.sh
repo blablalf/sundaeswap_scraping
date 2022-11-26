@@ -16,6 +16,7 @@ if [[ $(cat settings.txt | sed -n -e "s/ask_for_install *= *//p") == 'true' ]]; 
     if [[ $response != 'n' ]]; then
         echo "Enter scrape.sh directory path to be able to automatically launch the script (without \" or ' characters): "
         read response
+        echo "response"$response
         if [[ $(cat settings.txt | sed -n -e "s/price_min_interval *= *//p") != 1 ]]; then
             price_min_interval=$(cat settings.txt | sed -ne 's/price_min_interval *= *//p')
             echo "*/$price_min_interval * * * * $response/scrape.sh" > ./ressources/.cronjobs
@@ -30,7 +31,7 @@ if [[ $(cat settings.txt | sed -n -e "s/ask_for_install *= *//p") == 'true' ]]; 
         echo "(y)/n: "
         read response
         if [[ $response != 'n' ]]; then
-            crontab ./ressources/.cronjobs
+            (crontab -l && cat ./ressources/.cronjobs) | crontab -
         fi
         echo ""
     fi
