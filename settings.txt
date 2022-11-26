@@ -1,4 +1,4 @@
-ask_for_install =         true
+ask_for_install =         false
 asset_to_follow= CLAP
 get_price=true
 price_min_interval=2
