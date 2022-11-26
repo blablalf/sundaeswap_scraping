@@ -1,5 +1,5 @@
-ask_for_install =         false
-asset_to_follow= MELD
+ask_for_install =         true
+asset_to_follow= CLAP
 get_price=true
 price_min_interval=2
 echo_data  =true
