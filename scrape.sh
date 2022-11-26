@@ -120,7 +120,7 @@ if [[ $1 == '--daily' ]]; then
     #For example, for the value 1 096 634,54 -> there are these components |1|, |096|, |634| and |54|
     #Of course there the integers parts, and the decimal one
     #So we count the integers parts and then we parse them
-    if [[ $(echo $full_asset_code | grep -o "Volume 24H.*More") || $(echo $full_asset_code | grep -o "N/A") ]]; then
+    if [[ $(echo $full_asset_code | grep -o "Volume 24H.*More") || $(echo $full_asset_code | grep -o "N/A") || $(echo $full_asset_code | grep -o "\.\.\.") ]]; then
         volume="no_volume"
     else
         volume_code=$(echo $full_asset_code | grep -o "Volume 24H.*₳")
